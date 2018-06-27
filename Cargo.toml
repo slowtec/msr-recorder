@@ -1,0 +1,12 @@
+[package]
+name = "msr-recorder"
+version = "0.1.0"
+authors = ["Markus Kohlhase <markus.kohlhase@slowtec.de>"]
+homepage = "https://github.com/slowtec/msr-recoder"
+repository = "https://github.com/slowtec/msr-recorder"
+
+[dependencies]
+log = "0.4"
+chrono = "0.4"
+csv = "1.0"
+msr = { version = "*", git = "https://github.com/slowtec/msr" }
