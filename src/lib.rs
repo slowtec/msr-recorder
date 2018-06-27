@@ -20,12 +20,12 @@ pub struct CsvRecorder {
 }
 
 /// Get a list of values names that can be recorded.
-trait RecKeys {
+pub trait RecKeys {
     fn rec_keys(&self) -> Vec<String>;
 }
 
 /// Get a recordable map of values.
-trait RecVals {
+pub trait RecVals {
     fn rec_vals(&self) -> HashMap<String, Value>;
 }
 
@@ -143,8 +143,7 @@ impl RecVals for SyncSystemState {
 
 impl CsvRecorder {
     /// Create a new recorder instance.
-    pub fn new(dir: &Path, runtime: &SyncRuntime) -> Result<Self> {
-        let key_list = runtime.rec_keys();
+    pub fn new(dir: &Path, key_list: Vec<String>) -> Result<Self> {
         let file_name = create_file_name(dir);
         if let Err(err) = fs::create_dir_all(dir) {
             if err.kind() != io::ErrorKind::AlreadyExists {
@@ -162,11 +161,6 @@ impl CsvRecorder {
     /// Add a map of values to the internal buffer.
     pub fn record(&mut self, time: DateTime<Utc>, values: HashMap<String, Value>) {
         self.states.push((time, values));
-    }
-
-    /// Add a state to the internal buffer.
-    pub fn record_state(&mut self, time: DateTime<Utc>, state: &SyncSystemState) {
-        self.states.push((time, state.rec_vals()));
     }
 
     /// Write buffred values to disk.
