@@ -15,8 +15,18 @@ use std::{
 pub struct CsvRecorder {
     created_header: bool,
     file_name: PathBuf,
-    key_list: Vec<String>,
     states: Vec<(DateTime<Utc>, HashMap<String, Value>)>,
+    cfg: CsvRecorderConfig,
+}
+
+/// CSV recorder configuration.
+pub struct CsvRecorderConfig {
+    /// Path to the storing direcory
+    pub dir: PathBuf,
+    /// List of IDs that shall be recorded.
+    pub key_list: Vec<String>,
+    /// Time formatting option.
+    pub time_format: Option<String>,
 }
 
 /// Get a list of values names that can be recorded.
@@ -143,9 +153,9 @@ impl RecVals for SyncSystemState {
 
 impl CsvRecorder {
     /// Create a new recorder instance.
-    pub fn new(dir: &Path, key_list: Vec<String>) -> Result<Self> {
-        let file_name = create_file_name(dir);
-        if let Err(err) = fs::create_dir_all(dir) {
+    pub fn new(cfg: CsvRecorderConfig) -> Result<Self> {
+        let file_name = create_file_name(&cfg.dir);
+        if let Err(err) = fs::create_dir_all(&cfg.dir) {
             if err.kind() != io::ErrorKind::AlreadyExists {
                 return Err(err);
             }
@@ -153,7 +163,7 @@ impl CsvRecorder {
         Ok(CsvRecorder {
             created_header: false,
             file_name,
-            key_list,
+            cfg,
             states: vec![],
         })
     }
@@ -183,12 +193,13 @@ impl CsvRecorder {
         for (time, state) in self.states.iter() {
             if !self.created_header {
                 let mut rec = vec!["timestamp_utc".to_string()];
-                rec.extend_from_slice(self.key_list.as_slice());
+                rec.extend_from_slice(self.cfg.key_list.as_slice());
                 writer.write_record(rec)?;
                 self.created_header = true;
             }
 
-            let vals: Vec<_> = self.key_list
+            let vals: Vec<_> = self.cfg
+                .key_list
                 .iter()
                 .map(|key| match state.get(key) {
                     Some(v) => {
@@ -208,7 +219,13 @@ impl CsvRecorder {
                 })
                 .collect();
 
-            let mut rec = vec![time.timestamp_millis().to_string()];
+            let mut rec = vec![];
+
+            if let Some(ref fmt) = self.cfg.time_format {
+                rec.push(time.format(&fmt).to_string());
+            } else {
+                rec.push(time.timestamp_millis().to_string());
+            }
             rec.extend_from_slice(vals.as_slice());
             writer.write_record(rec)?;
         }
