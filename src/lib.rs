@@ -182,7 +182,7 @@ impl CsvRecorder {
 
         for (time, state) in self.states.iter() {
             if !self.created_header {
-                let mut rec = vec!["timestamp".to_string()];
+                let mut rec = vec!["timestamp_utc".to_string()];
                 rec.extend_from_slice(self.key_list.as_slice());
                 writer.write_record(rec)?;
                 self.created_header = true;
