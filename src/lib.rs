@@ -98,9 +98,21 @@ impl RecVals for IoState {
     }
 }
 
-impl RecVals for msr::SyncRuntimeState {
+impl RecVals for SystemState {
     fn rec_vals(&self) -> HashMap<String, Value> {
         let mut map = HashMap::new();
+        for (k, v) in self.io.rec_vals() {
+            map.insert(k, v);
+        }
+        for (k, v) in self.setpoints.iter() {
+            map.insert(format!("setpoint.{}", k), v.clone());
+        }
+        for (id, state) in self.rules.iter() {
+            map.insert(format!("rule.{}", id), Value::from(*state));
+        }
+        for (id, state) in self.state_machines.iter() {
+            map.insert(format!("fsm.{}", id), Value::from(state.clone()));
+        }
         for (id, c) in self.controllers.iter() {
             use ControllerState::*;
             match c {
@@ -127,25 +139,6 @@ impl RecVals for msr::SyncRuntimeState {
                     );
                 }
             }
-        }
-        for (id, state) in self.rules.iter() {
-            map.insert(format!("rule.{}", id), Value::from(*state));
-        }
-        map
-    }
-}
-
-impl RecVals for SyncSystemState {
-    fn rec_vals(&self) -> HashMap<String, Value> {
-        let mut map = HashMap::new();
-        for (k, v) in self.io.rec_vals() {
-            map.insert(k, v);
-        }
-        for (k, v) in self.runtime.rec_vals() {
-            map.insert(k, v);
-        }
-        for (k, v) in self.setpoints.iter() {
-            map.insert(format!("setpoint.{}", k), v.clone());
         }
         map
     }
