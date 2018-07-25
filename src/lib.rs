@@ -71,6 +71,10 @@ impl RecKeys for SyncRuntime {
                 keys.extend_from_slice(&l.rec_keys());
             }
         }
+        for (id, _) in self.state_machines.iter() {
+            keys.push(format!("fsm.{}", id));
+        }
+        keys.push("rules".into());
         keys.sort();
         keys.dedup();
         keys
@@ -87,6 +91,10 @@ impl RecVals for IoState {
         let outputs: HashMap<String, Value> = self.outputs
             .iter()
             .map(|(id, v)| (format!("out.{}", id), v.clone()))
+            .collect();
+        let mem: HashMap<String, Value> = self.mem
+            .iter()
+            .map(|(id, v)| (format!("mem.{}", id), v.clone()))
             .collect();
         for (k, v) in inputs {
             map.insert(k, v);
@@ -107,9 +115,17 @@ impl RecVals for SystemState {
         for (k, v) in self.setpoints.iter() {
             map.insert(format!("setpoint.{}", k), v.clone());
         }
-        for (id, state) in self.rules.iter() {
-            map.insert(format!("rule.{}", id), Value::from(*state));
-        }
+
+        let active_rules = self.rules
+            .iter()
+            .filter(|(_, state)| **state)
+            .map(|(id, _)| id)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(",");
+
+        map.insert("rules".into(), Value::from(active_rules));
+
         for (id, state) in self.state_machines.iter() {
             map.insert(format!("fsm.{}", id), Value::from(state.clone()));
         }
