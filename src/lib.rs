@@ -9,6 +9,7 @@ use csv::Writer;
 use msr::*;
 use std::{
     collections::HashMap, fs, fs::OpenOptions, io::{self, Result}, path::{Path, PathBuf},
+    time::Duration,
 };
 
 /// A simple CSV recoder implementation.
@@ -221,6 +222,7 @@ impl CsvRecorder {
                             Integer(i) => i.to_string(),
                             Bit(b) => b.to_string(),
                             Text(t) => t.clone(),
+                            Timeout(t) => (*t == Duration::new(0, 0)).to_string(),
                             Bin(_) => {
                                 warn!("The binary data of '{}' will not be recorded", key);
                                 "".to_string()
