@@ -102,6 +102,9 @@ impl RecVals for IoState {
         for (k, v) in outputs {
             map.insert(k, v);
         }
+        for (k, v) in mem {
+            map.insert(k, v);
+        }
         map
     }
 }
