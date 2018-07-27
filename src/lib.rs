@@ -67,10 +67,8 @@ impl RecKeys for Loop {
 impl RecKeys for SyncRuntime {
     fn rec_keys(&self) -> Vec<String> {
         let mut keys = vec![];
-        for (_, interval_loops) in self.loops.iter() {
-            for l in interval_loops.iter() {
-                keys.extend_from_slice(&l.rec_keys());
-            }
+        for l in self.loops.iter() {
+            keys.extend_from_slice(&l.rec_keys());
         }
         for (id, _) in self.state_machines.iter() {
             keys.push(format!("fsm.{}", id));
