@@ -8,22 +8,25 @@ use chrono::prelude::*;
 use csv::Writer;
 use msr::*;
 use std::{
-    collections::HashMap, fs, fs::OpenOptions, io::{self, Result}, path::{Path, PathBuf},
+    collections::HashMap,
+    fs,
+    fs::OpenOptions,
+    io::{self, Result},
+    path::PathBuf,
     time::Duration,
 };
 
 /// A simple CSV recoder implementation.
 pub struct CsvRecorder {
     created_header: bool,
-    file_name: PathBuf,
     states: Vec<(DateTime<Utc>, HashMap<String, Value>)>,
     cfg: CsvRecorderConfig,
 }
 
 /// CSV recorder configuration.
 pub struct CsvRecorderConfig {
-    /// Path to the storing direcory
-    pub dir: PathBuf,
+    /// Path to the CSV file
+    pub file_name: PathBuf,
     /// List of IDs that shall be recorded.
     pub key_list: Vec<String>,
     /// Time formatting option.
@@ -44,7 +47,8 @@ impl RecKeys for Loop {
     fn rec_keys(&self) -> Vec<String> {
         let mut keys = vec![format!("setpoint.{}", self.id)];
         let inputs: Vec<_> = self.inputs.iter().map(|id| format!("in.{}", id)).collect();
-        let outputs: Vec<_> = self.outputs
+        let outputs: Vec<_> = self
+            .outputs
             .iter()
             .map(|id| format!("out.{}", id))
             .collect();
@@ -83,15 +87,18 @@ impl RecKeys for SyncRuntime {
 impl RecVals for IoState {
     fn rec_vals(&self) -> HashMap<String, Value> {
         let mut map = HashMap::new();
-        let inputs: HashMap<String, Value> = self.inputs
+        let inputs: HashMap<String, Value> = self
+            .inputs
             .iter()
             .map(|(id, v)| (format!("in.{}", id), v.clone()))
             .collect();
-        let outputs: HashMap<String, Value> = self.outputs
+        let outputs: HashMap<String, Value> = self
+            .outputs
             .iter()
             .map(|(id, v)| (format!("out.{}", id), v.clone()))
             .collect();
-        let mem: HashMap<String, Value> = self.mem
+        let mem: HashMap<String, Value> = self
+            .mem
             .iter()
             .map(|(id, v)| (format!("mem.{}", id), v.clone()))
             .collect();
@@ -118,7 +125,8 @@ impl RecVals for SystemState {
             map.insert(format!("setpoint.{}", k), v.clone());
         }
 
-        let active_rules = self.rules
+        let active_rules = self
+            .rules
             .iter()
             .filter(|(_, state)| **state)
             .map(|(id, _)| id)
@@ -165,15 +173,13 @@ impl RecVals for SystemState {
 impl CsvRecorder {
     /// Create a new recorder instance.
     pub fn new(cfg: CsvRecorderConfig) -> Result<Self> {
-        let file_name = create_file_name(&cfg.dir);
-        if let Err(err) = fs::create_dir_all(&cfg.dir) {
+        if let Err(err) = fs::create_dir_all(&cfg.file_name) {
             if err.kind() != io::ErrorKind::AlreadyExists {
                 return Err(err);
             }
         }
         Ok(CsvRecorder {
             created_header: false,
-            file_name,
             cfg,
             states: vec![],
         })
@@ -195,7 +201,7 @@ impl CsvRecorder {
             .create(true)
             .write(true)
             .append(true)
-            .open(&self.file_name)?;
+            .open(&self.cfg.file_name)?;
 
         let mut writer = Writer::from_writer(file);
 
@@ -209,7 +215,8 @@ impl CsvRecorder {
                 self.created_header = true;
             }
 
-            let vals: Vec<_> = self.cfg
+            let vals: Vec<_> = self
+                .cfg
                 .key_list
                 .iter()
                 .map(|key| match state.get(key) {
@@ -245,10 +252,4 @@ impl CsvRecorder {
         self.states = vec![];
         Ok(())
     }
-}
-
-fn create_file_name(dir: &Path) -> PathBuf {
-    let now = Utc::now();
-    let file_name = now.format("%Y-%m-%d_%H-%M-%S").to_string();
-    dir.join(file_name).with_extension("csv")
 }
