@@ -7,14 +7,7 @@ extern crate msr;
 use chrono::prelude::*;
 use csv::Writer;
 use msr::*;
-use std::{
-    collections::HashMap,
-    fs,
-    fs::OpenOptions,
-    io::{self, Result},
-    path::PathBuf,
-    time::Duration,
-};
+use std::{collections::HashMap, fs::OpenOptions, io::Result, path::PathBuf, time::Duration};
 
 /// A simple CSV recoder implementation.
 pub struct CsvRecorder {
@@ -172,17 +165,12 @@ impl RecVals for SystemState {
 
 impl CsvRecorder {
     /// Create a new recorder instance.
-    pub fn new(cfg: CsvRecorderConfig) -> Result<Self> {
-        if let Err(err) = fs::create_dir_all(&cfg.file_name) {
-            if err.kind() != io::ErrorKind::AlreadyExists {
-                return Err(err);
-            }
-        }
-        Ok(CsvRecorder {
+    pub fn new(cfg: CsvRecorderConfig) -> Self {
+        CsvRecorder {
             created_header: false,
             cfg,
             states: vec![],
-        })
+        }
     }
 
     /// Add a map of values to the internal buffer.
