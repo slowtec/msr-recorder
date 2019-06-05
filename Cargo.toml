@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Markus Kohlhase <markus.kohlhase@slowtec.de>"]
 homepage = "https://github.com/slowtec/msr-recoder"
 repository = "https://github.com/slowtec/msr-recorder"
+edition = "2018"
 
 [dependencies]
 log = "0.4"

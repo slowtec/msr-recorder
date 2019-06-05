@@ -1,11 +1,6 @@
-#[macro_use]
-extern crate log;
-extern crate chrono;
-extern crate csv;
-extern crate msr;
-
 use chrono::prelude::*;
 use csv::Writer;
+use log::warn;
 use msr::*;
 use std::{collections::HashMap, fs::OpenOptions, io::Result, path::PathBuf, time::Duration};
 
@@ -45,7 +40,7 @@ impl RecKeys for Loop {
             .iter()
             .map(|id| format!("out.{}", id))
             .collect();
-        use ControllerConfig::*;
+        use crate::ControllerConfig::*;
         let (c_type, c_keys) = match self.controller {
             Pid(_) => ("pid", vec!["target", "prev_value", "p", "i", "d"]),
             BangBang(_) => ("bb", vec!["threshold", "current"]),
@@ -133,7 +128,7 @@ impl RecVals for SystemState {
             map.insert(format!("fsm.{}", id), Value::from(state.clone()));
         }
         for (id, c) in self.controllers.iter() {
-            use ControllerState::*;
+            use crate::ControllerState::*;
             match c {
                 Pid(s) => {
                     map.insert(
@@ -209,7 +204,7 @@ impl CsvRecorder {
                 .iter()
                 .map(|key| match state.get(key) {
                     Some(v) => {
-                        use Value::*;
+                        use crate::Value::*;
                         match v {
                             Decimal(d) => d.to_string(),
                             Integer(i) => i.to_string(),
